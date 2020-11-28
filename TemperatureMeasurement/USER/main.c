@@ -5,7 +5,8 @@
 #include "lcd.h"
 #include "usart.h"
 #include "24cxx.h"
-#include "w25qxx.h"
+#include "timer.h"
+#include "rtc.h"
 #include "touch.h"
 #include "spi.h"
 
@@ -31,8 +32,12 @@ int main(void)
 	LED_Init(); //LED端口初始化
 	LCD_Init();
 	KEY_Init();
+	RTC_Init();	  			//RTC初始化
 	SPI2_Init();
 	SPI2_SetSpeed(SPI_BaudRatePrescaler_2);
+	TIM3_Int_Init(4999,7199); //10Khz的计数频率，计数到5000为500ms 
+	//RTC_Set(2020,11,28,21,45,0); 
+
 	tp_dev.init();
 
 	POINT_COLOR = RED; //设置字体为红色
@@ -41,7 +46,7 @@ int main(void)
 
 void user_set_temp()
 {
-	LCD_Clear(WHITE); //清屏
+	// LCD_Clear(WHITE); //清屏
 	while (1)
 	{
 		draw_keyboard(10, 200, 80, 50, -1, cells);
@@ -94,13 +99,4 @@ short locate_click(u16 sx, u16 sy, u8 cell_w, u8 cell_h, u16 click_x, u16 click_
 	}
 
 	return (click_y - sy) / cell_h * 4 + (click_x - sx) / cell_w;
-}
-
-float read_res_factor()
-{
-	SPI2_ReadWriteByte(0x80); // write config register
-	SPI2_ReadWriteByte(0xB1);
-	delay_ms(100);					// wait for sampling and conversing
-	SPI2_ReadWriteByte(0x01);		// read RTD register(MSB)
-	u8 res = SPI2_ReadWriteByte(0); // read data
 }
