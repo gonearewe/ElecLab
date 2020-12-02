@@ -1,6 +1,7 @@
 #ifndef __TIMER_H
 #define __TIMER_H
 #include "sys.h"
+#include "rtc.h"
 //////////////////////////////////////////////////////////////////////////////////
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK战舰STM32开发板
@@ -14,6 +15,17 @@
 //All rights reserved
 //////////////////////////////////////////////////////////////////////////////////
 
+// 历史报警记录
+typedef struct Record
+{
+    float temp_limit;
+    float actual_temp;
+    _calendar_obj time;
+} Record;
+
+extern volatile Record records[5];
+extern volatile int records_len;
+extern volatile float TEMPERATURE_UPPER_LIMIT;
 void TIM3_Int_Init(u16 arr, u16 psc);
 
 #endif

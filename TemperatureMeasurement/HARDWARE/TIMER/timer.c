@@ -2,18 +2,9 @@
 #include "led.h"
 #include "rtc.h"
 #include "lcd.h"
-//////////////////////////////////////////////////////////////////////////////////
-//本程序只供学习使用，未经作者许可，不得用于其它任何用途
-//ALIENTEK精英STM32开发板
-//定时器 驱动代码
-//正点原子@ALIENTEK
-//技术论坛:www.openedv.com
-//修改日期:2012/9/3
-//版本：V1.0
-//版权所有，盗版必究。
-//Copyright(C) 广州市星翼电子科技有限公司 2009-2019
-//All rights reserved
-//////////////////////////////////////////////////////////////////////////////////
+#include "max31865.h"
+#include "stdbool.h"
+// volatile TEMPERATURE_WARN_FLAG
 
 //通用定时器3中断初始化
 //这里时钟选择为APB1的2倍，而APB1为36M
@@ -48,16 +39,16 @@ void TIM3_Int_Init(u16 arr, u16 psc)
 
 void display_time(void)
 {
-	POINT_COLOR = BLUE; //设置字体为蓝色
+	POINT_COLOR = BLUE;
 
-	static u8 isInit = 1;
+	static bool isInit = true;
 	if (isInit)
 	{
 		LCD_ShowString(60, 130, 200, 16, 16, "    -  -  ");
 		LCD_ShowString(60, 162, 200, 16, 16, "  :  :  ");
-		isInit = 0;
+		isInit = false;
 	}
-	
+
 	LCD_ShowNum(60, 130, calendar.w_year, 4, 16);
 	LCD_ShowNum(100, 130, calendar.w_month, 2, 16);
 	LCD_ShowNum(124, 130, calendar.w_date, 2, 16);
@@ -95,6 +86,47 @@ void TIM3_IRQHandler(void) //TIM3中断
 {
 	if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET) //检查TIM3更新中断发生与否
 	{
+		static u8 warn_period = 0;
+		static bool warn_permit = true;
+		float temp = temperature(100, 430);
+		if (temp < TEMPERATURE_UPPER_LIMIT && warn_period == 0)
+		{
+			warn_permit = true;
+		}
+		if (temp > TEMPERATURE_UPPER_LIMIT && warn_period == 0 && warn_permit)
+		{
+			static u8 records_id = 0;
+			records[records_len].temp_limit = TEMPERATURE_UPPER_LIMIT;
+			records[records_len].actual_temp = temp;
+			records[records_len].time = calendar;
+			records_id = (records_id + 1) % 5;
+			records_len = records_len + 1 > 5 ? 5 : records_len + 1;
+
+			warn_period = 10;	 // 10*500 ms == 5 s
+			LED1 = 1;			 // 绿灯熄灭同时蜂鸣器响
+			LED0 = 0;			 // 红灯亮起
+			warn_permit = false; // to avoid continuous warnning
+		}
+		if (warn_period != 0)
+		{
+			warn_period--;
+		}
+		else
+		{ // 恢复正常状态
+			LED1 = 0;
+			LED0 = 1;
+		}
+
+		char buf[35] = {0};
+		sprintf(buf, "Limit(Celsius): %3.2f", TEMPERATURE_UPPER_LIMIT);
+		LCD_ShowString(60, 60, 300, 16, 16, (u8 *)buf);
+		for (int i = 0; i < 35; i++)
+		{
+			buf[i] = '\0';
+		}
+
+		sprintf(buf, "Temperature(Celsius): %3.0f", temp);
+		LCD_ShowString(60, 90, 400, 16, 16, (u8 *)buf);
 		display_time();
 		TIM_ClearITPendingBit(TIM3, TIM_IT_Update); //清除TIMx更新中断标志
 	}
