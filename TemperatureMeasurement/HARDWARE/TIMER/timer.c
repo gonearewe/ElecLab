@@ -3,7 +3,7 @@
 #include "rtc.h"
 #include "lcd.h"
 #include "max31865.h"
-#include "stdbool.h"
+#include "stdio.h"
 // volatile TEMPERATURE_WARN_FLAG
 
 //通用定时器3中断初始化
@@ -41,44 +41,19 @@ void display_time(void)
 {
 	POINT_COLOR = BLUE;
 
-	static bool isInit = true;
-	if (isInit)
+	char buf[35] = {0};
+	sprintf(buf, "%04d-%02d-%02d", calendar.w_year, calendar.w_month, calendar.w_date);
+	LCD_ShowString(60, 130, 200, 16, 16, (u8 *)buf);
+	for (int i = 0; i < 35; i++)
 	{
-		LCD_ShowString(60, 130, 200, 16, 16, "    -  -  ");
-		LCD_ShowString(60, 162, 200, 16, 16, "  :  :  ");
-		isInit = false;
+		buf[i] = '\0';
 	}
 
-	LCD_ShowNum(60, 130, calendar.w_year, 4, 16);
-	LCD_ShowNum(100, 130, calendar.w_month, 2, 16);
-	LCD_ShowNum(124, 130, calendar.w_date, 2, 16);
-	switch (calendar.week)
-	{
-	case 0:
-		LCD_ShowString(60, 148, 200, 16, 16, "Sunday   ");
-		break;
-	case 1:
-		LCD_ShowString(60, 148, 200, 16, 16, "Monday   ");
-		break;
-	case 2:
-		LCD_ShowString(60, 148, 200, 16, 16, "Tuesday  ");
-		break;
-	case 3:
-		LCD_ShowString(60, 148, 200, 16, 16, "Wednesday");
-		break;
-	case 4:
-		LCD_ShowString(60, 148, 200, 16, 16, "Thursday ");
-		break;
-	case 5:
-		LCD_ShowString(60, 148, 200, 16, 16, "Friday   ");
-		break;
-	case 6:
-		LCD_ShowString(60, 148, 200, 16, 16, "Saturday ");
-		break;
-	}
-	LCD_ShowNum(60, 162, calendar.hour, 2, 16);
-	LCD_ShowNum(84, 162, calendar.min, 2, 16);
-	LCD_ShowNum(108, 162, calendar.sec, 2, 16);
+	sprintf(buf, "%02d:%02d:%02d", calendar.hour, calendar.min, calendar.sec);
+	LCD_ShowString(60, 162, 200, 16, 16, (u8 *)buf);
+
+	const char *week_table[7] = {"Sunday   ", "Monday   ", "Tuesday  ", "Wednesday", "Thursday ", "Friday   ", "Saturday "};
+	LCD_ShowString(60, 148, 200, 16, 16, (u8 *)week_table[calendar.week]);
 }
 
 //定时器3中断服务程序
@@ -96,13 +71,13 @@ void TIM3_IRQHandler(void) //TIM3中断
 		if (temp > TEMPERATURE_UPPER_LIMIT && warn_period == 0 && warn_permit)
 		{
 			static u8 records_id = 0;
-			records[records_len].temp_limit = TEMPERATURE_UPPER_LIMIT;
-			records[records_len].actual_temp = temp;
-			records[records_len].time = calendar;
+			records[records_id].temp_limit = TEMPERATURE_UPPER_LIMIT;
+			records[records_id].actual_temp = temp;
+			records[records_id].time = calendar;
 			records_id = (records_id + 1) % 5;
 			records_len = records_len + 1 > 5 ? 5 : records_len + 1;
 
-			warn_period = 10;	 // 10*500 ms == 5 s
+			warn_period = 10;	// 10*500 ms == 5 s
 			LED1 = 1;			 // 绿灯熄灭同时蜂鸣器响
 			LED0 = 0;			 // 红灯亮起
 			warn_permit = false; // to avoid continuous warnning
@@ -118,14 +93,14 @@ void TIM3_IRQHandler(void) //TIM3中断
 		}
 
 		char buf[35] = {0};
-		sprintf(buf, "Limit(Celsius): %3.2f", TEMPERATURE_UPPER_LIMIT);
-		LCD_ShowString(60, 60, 300, 16, 16, (u8 *)buf);
+		sprintf(buf, "Limit(Celsius): %d       ", (int)TEMPERATURE_UPPER_LIMIT);
+		LCD_ShowString(60, 60, 400, 16, 16, (u8 *)buf);
 		for (int i = 0; i < 35; i++)
 		{
 			buf[i] = '\0';
 		}
 
-		sprintf(buf, "Temperature(Celsius): %3.0f", temp);
+		sprintf(buf, "Temperature(Celsius): %d       ", (int)temp);
 		LCD_ShowString(60, 90, 400, 16, 16, (u8 *)buf);
 		display_time();
 		TIM_ClearITPendingBit(TIM3, TIM_IT_Update); //清除TIMx更新中断标志

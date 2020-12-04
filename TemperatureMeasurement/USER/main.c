@@ -10,11 +10,12 @@
 #include "touch.h"
 #include "spi.h"
 #include "max31865.h"
+#include "stdio.h"
 
 volatile Record records[5];
 volatile int records_len = 0;
 
-volatile float TEMPERATURE_UPPER_LIMIT = 50;
+volatile float TEMPERATURE_UPPER_LIMIT = 200;
 
 char cells[4][4] = {
 	{'1', '2', '3', 'X'},
@@ -36,11 +37,12 @@ int main(void)
 	uart_init(115200);								//串口初始化为115200
 	LED_Init();										//LED端口初始化
 	LCD_Init();
+	POINT_COLOR = BLUE;
 	KEY_Init();
 	RTC_Init(); //RTC初始化
 	SPI_MAX31865_Init();
 	TIM3_Int_Init(4999, 7199); //10Khz的计数频率，计数到5000为500ms
-	//RTC_Set(2020,11,28,21,45,0);
+	RTC_Set(2020,12,4,22,59,0);
 	tp_dev.init();
 
 	u8 t = 0;
@@ -50,54 +52,64 @@ int main(void)
 	{
 		t = (t + 1) % 10;
 		key = KEY_Scan(0);
-		u16 x = 60, y = 200;
+		const u16 x = 60, y = 200;
 		if (key == WKUP_PRES)
 		{
 			LCD_Fill(x, y, x + 300, y + 175, WHITE);
 			user_set_temperature();
 			LCD_Fill(10, 200, 350, 500, WHITE);
 		}
-		else if (key == KEY0_PRES || key == KEY1_PRES)
+		else if (key == KEY0_PRES)
+		{
+			arrow_pos = (arrow_pos + 1) % 5;
+		}
+		else if (key == KEY1_PRES)
+		{
+			arrow_pos = (arrow_pos + 4) % 5;
+		}
+
+		// show record menu
+		for (int i = 0; i < 5; i++)
+		{
+			if (i >= records_len)
+			{
+				LCD_ShowString(x, y + 16 * i, 150, 16, 16, "  <empty>");
+			}
+			else
+			{
+				char buf[20] = {0};
+				sprintf(buf, "  %0d:%0d:%0d", records[i].time.hour, records[i].time.min, records[i].time.sec);
+				LCD_ShowString(x, y + 16 * i, 150, 16, 16, (u8 *)buf);
+			}
+			LCD_ShowChar(x, y + arrow_pos * 16, '>', 16, 0);
+		}
+
+		// show record details
+		if (arrow_pos < records_len)
 		{
 			POINT_COLOR = BLUE;
-			if (key == KEY0_PRES)
+			LCD_ShowString(x, y + 6 * 16, 150, 24, 24, "Records:");
+
+			Record record = records[arrow_pos];
+			char buf[35] = {0};
+			sprintf(buf, "date: %04d-%02d-%02d", record.time.w_year, record.time.w_month, record.time.w_date);
+			LCD_ShowString(x, y + 6 * 16 + 24, 300, 24, 24, (u8 *)buf);
+			for (int i = 0; i < 35; i++)
 			{
-				arrow_pos = (arrow_pos + 1) % 5;
-			}
-			else if (key == KEY1_PRES)
-			{
-				arrow_pos = (arrow_pos + 4) % 5;
+				buf[i] = '\0';
 			}
 
-			for (int i = 0; i < 5; i++)
+			sprintf(buf, "limit(Celsius): %3.1f       ", record.temp_limit);
+			LCD_ShowString(x, y + 6 * 16 + 24 * 2, 300, 16, 16, (u8 *)buf);
+			for (int i = 0; i < 35; i++)
 			{
-				if (i >= records_len)
-				{
-					LCD_ShowString(x, y + 16 * i, 150, 16, 16, "  <empty>");
-				}
-				else
-				{
-					char buf[20] = {0};
-					sprintf(buf, "  %0d:%0d:%0d", records[i].time.hour, records[i].time.min, records[i].time.sec);
-					LCD_ShowString(x, y + 16 * i, 150, 16, 16, (u8 *)buf);
-				}
-				LCD_ShowChar(x, y + arrow_pos * 16, '>', 16, 0);
+				buf[i] = '\0';
 			}
-			if (arrow_pos < records_len)
-			{
-				LCD_ShowString(x, y + 6 * 16, 150, 24, 24, "Records:");
 
-				char buf[35] = {0};
-				sprintf(buf, "limit(Celsius): %3.0f", records[arrow_pos].temp_limit);
-				LCD_ShowString(x, y + 6 * 16 + 24, 300, 24, 24, (u8 *)buf);
-				for (int i = 0; i < 35; i++)
-				{
-					buf[i] = '\0';
-				}
-
-				sprintf(buf, "actual(Celsius): %3.0f", records[arrow_pos].actual_temp);
-				LCD_ShowString(x, y + 6 * 16 + 24 * 2, 300, 24, 24, (u8 *)buf);
-			}
+			sprintf(buf, "actual(Celsius): %3.1f       ", record.actual_temp);
+			LCD_ShowString(x, y + 6 * 16 + 24 * 3, 300, 16, 16, (u8 *)buf);
+		}else {
+			LCD_Fill(x, y + 6 * 16, x + 300, y + 6 * 16 + 24 * 4, WHITE);
 		}
 		delay_ms(10);
 	}
