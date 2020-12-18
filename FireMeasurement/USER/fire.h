@@ -3,8 +3,10 @@
 
 #include "stm32f10x.h"
 
-const u16 outline[500][16];
-const u16 outer_fill[500][8];
-const u16 inner_fill[500][4];
+#define FIRE_LAYOUT_LEN 500
+
+extern const u16 outline[FIRE_LAYOUT_LEN][16];
+extern const u16 outer_fill[FIRE_LAYOUT_LEN][16];
+extern const u16 inner_fill[FIRE_LAYOUT_LEN][16];
 
 #endif

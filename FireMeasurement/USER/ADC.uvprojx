@@ -423,6 +423,11 @@
               <FileType>1</FileType>
               <FilePath>.\system_stm32f10x.c</FilePath>
             </File>
+            <File>
+              <FileName>fire.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\fire.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
