@@ -1,17 +1,8 @@
 #include "timer.h"
 #include "led.h"
-//////////////////////////////////////////////////////////////////////////////////
-//本程序只供学习使用，未经作者许可，不得用于其它任何用途
-//ALIENTEK精英STM32开发板
-//定时器 驱动代码
-//正点原子@ALIENTEK
-//技术论坛:www.openedv.com
-//修改日期:2012/9/3
-//版本：V1.0
-//版权所有，盗版必究。
-//Copyright(C) 广州市星翼电子科技有限公司 2009-2019
-//All rights reserved
-//////////////////////////////////////////////////////////////////////////////////
+#include "dac.h"
+
+u8 FIRE_STAGE = 0;
 
 //通用定时器3中断初始化
 //这里时钟选择为APB1的2倍，而APB1为36M
@@ -50,5 +41,14 @@ void TIM3_IRQHandler(void) //TIM3中断
 	{
 		TIM_ClearITPendingBit(TIM3, TIM_IT_Update); //清除TIMx更新中断标志
 		LED1 = !LED1;
+		static u8 t = 0;
+		const u8 stage_vol_table[10] = {224, 223, 220, 218, 215, 211, 204, 192, 179, 155};
+		u16 dacval = (stage_vol_table[FIRE_STAGE] / 3300.0) * 4096;
+		if (t <= 3)
+		{
+			dacval += 4 - t;
+		}
+		DAC_SetChannel1Data(DAC_Align_12b_R, dacval);
+		t = (t + 1) % 12;
 	}
 }
