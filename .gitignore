@@ -54,5 +54,8 @@ dkms.conf
 # VS Code
 .vscode/
 
+# IDEA
+.idea/
+
 # Output
 OBJ/
