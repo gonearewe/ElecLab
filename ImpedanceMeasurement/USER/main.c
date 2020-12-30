@@ -7,9 +7,10 @@
 #include "24cxx.h"
 #include "w25qxx.h"
 #include "touch.h"
-#include "ad9833.h"
+#include "ad9834.h"
 #include "adc.h"
 #include "timer.h"
+#include "fft.h"
 
 void Dac1_Init(void)
 {
@@ -55,7 +56,7 @@ void Tim4_Init(u16 arr,u16 psc)
 	 TIM_Cmd(TIM4,ENABLE);
  }
 
-u16 x[512];
+float x[512];
 int main(void)
 {
 	delay_init();									//延时函数初始化
@@ -65,34 +66,37 @@ int main(void)
 	LED_Init(); //LED端口初始化
 	LCD_Init();
 	KEY_Init();
+	AD9834_Init();
+	AD9834_Select_Wave(Sine_Wave);//Sine_Wave  Square_Wave  Triangle_Wave
+	AD9834_Set_Freq(FREQ_0, 1000);
 	// AD9833_Init();
-	// AD9833_SetFrequencyQuick(1,AD9833_OUT_SINUS  );
+	// AD9833_SetFrequencyQuick(0,AD9833_OUT_TRIANGLE  );
 	
-	Tim4_Init(9,35); // T = (878+1)*(71+1)/72M
+	Tim4_Init(1,0); // T = (878+1)*(71+1)/72M
 	Dac1_Init();				//DAC初始化 
-	TIM3_PWM_Init(8999,0);
-	TIM_SetCompare2(TIM3,250);
-	LED0 = 1;
+	// TIM3_PWM_Init(8999,0);
+	// TIM_SetCompare2(TIM3,250);
+	// LED0 = 1;
 	while (1)
 	{
-//		u16 max=0,min=4095;
-//		for(int i=0;i<512;i++){
-//			x[i]=Get_Adc(ADC_Channel_1);
-//			delay_ms(2);
-//			if(x[i]>max){
-//				max=x[i];
-//			}
-//			if(x[i]<min){
-//				min=x[i];
-//			}
-//		}
-//		LCD_Clear(WHITE);
-//		for(int i=0;i<512;i++){
-//			LCD_DrawLine(10,i+20,10+x[i]*(250/4096.0),i+20);
-//		}
-////		LCD_ShowNum(0,0,max,4,16);
-////		LCD_ShowNum(50,0,min,4,16);
-		LCD_ShowNum(50,0,Get_Adc_Average(ADC_Channel_1,200),4,16);
+		for(int i=0;i<512;i++){
+			x[i]=Get_Adc(ADC_Channel_1)*(3.3/4096);
+			// delay_ms(1);
+		}
+		LCD_Clear(WHITE);
+		for(int i=0;i<480;i++){
+			LCD_DrawLine(10,i+20,10+x[i]*(280/3.3),i+20);
+		}
+		fft(x,512);
+		float max=0;
+		for(int i=1;i<512;i++){
+			if(x[i]>max){
+				max=x[i];
+			}
+		}
+		LCD_ShowNum(0,0,(u32)(x[0]+0.5),4,16);
+		LCD_ShowNum(50,0,(u32)(max+0.5),4,16);
+		// LCD_ShowNum(50,0,Get_Adc_Average(ADC_Channel_1,200)/10,4,16);
 		
 	}
 	

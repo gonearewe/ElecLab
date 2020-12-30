@@ -7,17 +7,15 @@
 #define Square_Wave 0x2028
 /* AD9834¾§ÕñÆµÂÊ */ 
 
-#define AD9834_SYSTEM_COLCK     75000000UL 
+#define AD9834_SYSTEM_COLCK     25000000UL 
 // B6 FS  B5 PS    B7 FSY   B8 SCK   B9 SDA B10 RST 
 
 /* AD9834 ¿ØÖÆÒý½Å */ 
-#define AD9834_Control_Port  GPIOA
-#define AD9834_FSYNC  GPIO_Pin_3    //A3
-#define AD9834_SCLK   GPIO_Pin_4			//A4
-#define AD9834_SDATA  GPIO_Pin_5 		//A5
+#define AD9834_Control_Port  GPIOB
+#define AD9834_FSYNC  GPIO_Pin_12    //A3
+#define AD9834_SCLK   GPIO_Pin_13			//A4
+#define AD9834_SDATA  GPIO_Pin_15 		//A5
 #define AD9834_RESET  GPIO_Pin_6		//A6
-#define AD9834_FS  		GPIO_Pin_0		//B0
-#define AD9834_PS  		GPIO_Pin_1		//B1
 
 #define AD9834_FSYNC_SET   GPIO_SetBits(AD9834_Control_Port ,AD9834_FSYNC) 
 

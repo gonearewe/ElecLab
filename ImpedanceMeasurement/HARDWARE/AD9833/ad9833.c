@@ -1,7 +1,8 @@
 #include "spi.h"
 #include "ad9833.h"
+#include "delay.h"
 
-#define FCLK 30000000	//设置晶振频率
+#define FCLK 25000000	//设置晶振频率
 //#define RealFreDat    268435456.0/FCLK//总的公式为 Fout=（Fclk/2的28次方）*28位寄存器的值
 double RealFreDat = 268435456.0/FCLK;
 /********往ad9833写******************************/

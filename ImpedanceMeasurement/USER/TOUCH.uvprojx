@@ -365,7 +365,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_HD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\HARDWARE\KEY;..\HARDWARE\LCD;..\HARDWARE\RTC;..\HARDWARE\RTC;..\HARDWARE\WKUP;..\HARDWARE\ADC;..\HARDWARE\DAC;..\HARDWARE\DMA;..\HARDWARE\IIC;..\HARDWARE\24CXX;..\HARDWARE\SPI;..\HARDWARE\TOUCH;..\HARDWARE\W25QXX;..\HARDWARE\AD9833;..\HARDWARE\TIMER</IncludePath>
+              <IncludePath>..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\HARDWARE\KEY;..\HARDWARE\LCD;..\HARDWARE\RTC;..\HARDWARE\RTC;..\HARDWARE\WKUP;..\HARDWARE\ADC;..\HARDWARE\DAC;..\HARDWARE\DMA;..\HARDWARE\IIC;..\HARDWARE\24CXX;..\HARDWARE\SPI;..\HARDWARE\TOUCH;..\HARDWARE\W25QXX;..\HARDWARE\AD9833;..\HARDWARE\TIMER;..\HARDWARE\AD9834</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -422,6 +422,11 @@
               <FileName>system_stm32f10x.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\system_stm32f10x.c</FilePath>
+            </File>
+            <File>
+              <FileName>fft.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\fft.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -502,6 +507,11 @@
               <FileName>timer.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\TIMER\timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>AD9834.C</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\AD9834\AD9834.C</FilePath>
             </File>
           </Files>
         </Group>
