@@ -81,22 +81,22 @@ int main(void)
 	{
 		for(int i=0;i<512;i++){
 			x[i]=Get_Adc(ADC_Channel_1)*(3.3/4096);
-			// delay_ms(1);
+			//delay_ms(2);
 		}
-		LCD_Clear(WHITE);
+		LCD_Fill(10,20,320,500,WHITE);
 		for(int i=0;i<480;i++){
 			LCD_DrawLine(10,i+20,10+x[i]*(280/3.3),i+20);
 		}
 		fft(x,512);
 		float max=0;
-		for(int i=1;i<512;i++){
+		for(int i=1;i<512/2;i++){
 			if(x[i]>max){
 				max=x[i];
 			}
 		}
-		LCD_ShowNum(0,0,(u32)(x[0]+0.5),4,16);
-		LCD_ShowNum(50,0,(u32)(max+0.5),4,16);
-		// LCD_ShowNum(50,0,Get_Adc_Average(ADC_Channel_1,200)/10,4,16);
+		LCD_ShowNum(0,0,(u32)(x[0]*1000+0.5),8,16);
+		LCD_ShowNum(200,0,(u32)(max*1000+0.5),8,16);
+		// LCD_ShowNum(50,0,Get_Adc_Average(ADC_Channel_1,250),4,16);
 		
 	}
 	
