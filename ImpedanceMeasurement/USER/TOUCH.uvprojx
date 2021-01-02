@@ -499,11 +499,6 @@
               <FilePath>..\HARDWARE\ADC\adc.c</FilePath>
             </File>
             <File>
-              <FileName>ad9833.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\HARDWARE\AD9833\ad9833.c</FilePath>
-            </File>
-            <File>
               <FileName>timer.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\TIMER\timer.c</FilePath>

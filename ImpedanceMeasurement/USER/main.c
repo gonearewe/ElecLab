@@ -12,51 +12,41 @@
 #include "timer.h"
 #include "fft.h"
 
-void Dac1_Init(void)
+float x[512];
+void extract_pattern(u32 *dc, u32 *ac, unsigned long freq)
 {
-  
-	GPIO_InitTypeDef GPIO_InitStructure;
-	DAC_InitTypeDef DAC_InitType;
- 
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE );	  //使能PORTA通道时钟
-   	RCC_APB1PeriphClockCmd(RCC_APB1Periph_DAC, ENABLE );	  //使能DAC通道时钟 
- 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;			 // 端口配置
- 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN; 		 //模拟输入
- 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
- 	GPIO_Init(GPIOA, &GPIO_InitStructure);
-	GPIO_SetBits(GPIOA,GPIO_Pin_4);			           	 //  PA.4 输出高
-					
-	DAC_InitType.DAC_Trigger=DAC_Trigger_T4_TRGO;
-	DAC_InitType.DAC_WaveGeneration=DAC_WaveGeneration_Triangle;
-	DAC_InitType.DAC_LFSRUnmask_TriangleAmplitude=DAC_TriangleAmplitude_4095;
-	DAC_InitType.DAC_OutputBuffer=DAC_OutputBuffer_Enable ;	//DAC1输出缓存关闭 BOFF1=1
-    DAC_Init(DAC_Channel_1,&DAC_InitType);	 //初始化DAC通道1
- 
-	DAC_Cmd(DAC_Channel_1, ENABLE);  //使能DAC1
+	AD9834_Set_Freq(FREQ_0, freq);
+	delay_ms(100); // wait until it's steady
+
+	for (int i = 0; i < 512; i++)
+	{
+		x[i] = Get_Adc(ADC_Channel_1) * (3.3 / 4096);
+		//delay_ms(2);
+	}
+
+	// draw diagram
+	LCD_Fill(10, 20, 320, 500, WHITE);
+	for (int i = 0; i < 480; i++)
+	{
+		LCD_DrawLine(10, i + 20, 10 + x[i] * (280 / 3.3), i + 20);
+	}
+
+	fft(x, 512);
+	float max = 0;
+	for (int i = 1; i < 512 / 2; i++)
+	{
+		if (x[i] > max)
+		{
+			max = x[i];
+		}
+	}
+
+	*dc=(u32)(x[0] * 1000 + 0.5);
+	*ac=(u32)(max * 1000 + 0.5);
+	LCD_ShowNum(0, 0, *dc, 8, 16);
+	LCD_ShowNum(60, 0,*ac , 8, 16);
 }
 
-void Tim4_Init(u16 arr,u16 psc)
- {
-	 TIM_TimeBaseInitTypeDef TIM_TimeBaseInitstructure;
-	 
-	 /*************************定时器时钟源使能*********************************/
-	 RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4,ENABLE);
-	 
-	 /*************************定时器基本配置*********************************/
-	 TIM_TimeBaseInitstructure.TIM_Prescaler = psc;//预分频系数
-	 TIM_TimeBaseInitstructure.TIM_Period = arr;//自动装在值
-	 TIM_TimeBaseInitstructure.TIM_CounterMode = TIM_CounterMode_Up;//向上计数
-	 TIM_TimeBaseInitstructure.TIM_ClockDivision = TIM_CKD_DIV1;    
-	 TIM_TimeBaseInit(TIM4,&TIM_TimeBaseInitstructure);
-	 
-	 /*************************设置TIM4更新事件作为外部触发源*********************************/
-	 TIM_SelectOutputTrigger(TIM4,TIM_TRGOSource_Update);//更新作为触发源
-	 /*************************使能TIM4计数器*********************************/
-	 TIM_Cmd(TIM4,ENABLE);
- }
-
-float x[512];
 int main(void)
 {
 	delay_init();									//延时函数初始化
@@ -67,37 +57,22 @@ int main(void)
 	LCD_Init();
 	KEY_Init();
 	AD9834_Init();
-	AD9834_Select_Wave(Sine_Wave);//Sine_Wave  Square_Wave  Triangle_Wave
-	AD9834_Set_Freq(FREQ_0, 1000);
-	// AD9833_Init();
-	// AD9833_SetFrequencyQuick(0,AD9833_OUT_TRIANGLE  );
-	
-	Tim4_Init(1,0); // T = (878+1)*(71+1)/72M
-	Dac1_Init();				//DAC初始化 
-	// TIM3_PWM_Init(8999,0);
-	// TIM_SetCompare2(TIM3,250);
-	// LED0 = 1;
+	AD9834_Select_Wave(Sine_Wave); //Sine_Wave  Square_Wave  Triangle_Wave
+
 	while (1)
 	{
-		for(int i=0;i<512;i++){
-			x[i]=Get_Adc(ADC_Channel_1)*(3.3/4096);
-			//delay_ms(2);
+		u32 *dc, *ac;
+		extract_pattern(dc,ac,1000);
+		// TODO
+
+		extract_pattern(dc,ac,100000);
+		if(*dc<=12&&*ac<=8){
+			LCD_ShowString(150,0,100,8,16,"L1");
+		}else if(*dc<=15&&*ac<=12)
+		{
+			LCD_ShowString(150,0,100,8,16,"L2");
 		}
-		LCD_Fill(10,20,320,500,WHITE);
-		for(int i=0;i<480;i++){
-			LCD_DrawLine(10,i+20,10+x[i]*(280/3.3),i+20);
-		}
-		fft(x,512);
-		float max=0;
-		for(int i=1;i<512/2;i++){
-			if(x[i]>max){
-				max=x[i];
-			}
-		}
-		LCD_ShowNum(0,0,(u32)(x[0]*1000+0.5),8,16);
-		LCD_ShowNum(200,0,(u32)(max*1000+0.5),8,16);
-		// LCD_ShowNum(50,0,Get_Adc_Average(ADC_Channel_1,250),4,16);
 		
+		// LCD_ShowNum(50,0,Get_Adc_Average(ADC_Channel_1,250),4,16);
 	}
-	
 }
